@@ -2,16 +2,14 @@
 
 #include <map>
 #include <cassert>
+#include <string>
 
 int main() {
-    std::map<std::map<char, int>, int> m;
-    m[{{'x', 2}}] = 1;
-    m[{{'y', 1}}] = 2;
-    Polynom<int> p1(m);
+    Polynom<int> p1("x^2+[2]y+[5]", pconverter::to_int);
     int ans = p1.apply(std::map<char, int>{
         {'x', 2},
         {'y', 3}
     });
-    assert(ans == 10);
+    assert(ans == 15);
     return 0;
 }

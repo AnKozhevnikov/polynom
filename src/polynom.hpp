@@ -24,37 +24,17 @@ template <typename T> class Polynom
 
     template <typename U> U apply(std::map<char, U> m) const;
 
-    template <typename U> friend Polynom<U> operator+(const Polynom<U> &lhs, const Polynom<U> &rhs);
-
-    template <typename U> friend Polynom<U> operator-(const Polynom<U> &lhs, const Polynom<U> &rhs);
-
-    template <typename U> friend Polynom<U> operator*(const Polynom<U> &lhs, const Polynom<U> &rhs);
-
     Polynom &operator+=(const Polynom &other);
     Polynom &operator-=(const Polynom &other);
     Polynom &operator*=(const Polynom &other);
 
-    template <typename U> friend Polynom<U> operator*(const Polynom<U> &lhs, const U &rhs);
-
-    template <typename U> friend Polynom<U> operator*(const U &lhs, const Polynom<U> &rhs);
-
     Polynom &operator*=(const T &other);
 
-    template <typename U> friend Polynom<U> operator+(const Polynom<U> &lhs, const U &rhs);
-
-    template <typename U> friend Polynom<U> operator+(const U &lhs, const Polynom<U> &rhs);
-
     Polynom &operator+=(const T &other);
-
-    template <typename U> friend Polynom<U> operator-(const Polynom<U> &lhs, const U &rhs);
-
-    template <typename U> friend Polynom<U> operator-(const U &lhs, const Polynom<U> &rhs);
 
     Polynom &operator-=(const T &other);
 
     Polynom operator-() const;
-
-    template <typename U> friend Polynom<U> operator^(const Polynom<U> lhs, const unsigned long long rhs);
 
     Polynom &operator^=(const unsigned long long n);
 
@@ -74,7 +54,7 @@ template <typename T> T power(T base, unsigned long long exp)
     }
     return ret;
 }
-}
+} // anonymous namespace
 
 template <typename T> Polynom<T>::Polynom(T val)
 {
@@ -164,7 +144,7 @@ template <typename T> Polynom<T>::Polynom(std::string_view str, T (*transform)(c
             }
             else
             {
-                curCoef = 1;
+                curCoef = T(1);
             }
             if (!positive)
                 curCoef = -curCoef;
@@ -209,10 +189,12 @@ template <typename T> Polynom<T>::Polynom(std::string_view str, T (*transform)(c
 
             if (pos != str.size())
             {
-                if (str[pos])
+                if (str[pos] == '+')
                     positive = true;
-                else
+                else if (str[pos] == '-')
                     positive = false;
+                else
+                    throw std::invalid_argument("Invalid character");
                 ++pos;
             }
         }
@@ -248,18 +230,19 @@ template <typename T> template <typename U> U Polynom<T>::apply(std::map<char, U
     return result;
 }
 
-template <typename T> Polynom<T> operator+(const Polynom<T> &lhs, const Polynom<T> &rhs)
+template <typename T> Polynom<T> operator+(Polynom<T> lhs, const Polynom<T> &rhs)
 {
     lhs += rhs;
     return lhs;
 }
 
-template <typename T> Polynom<T> operator-(const Polynom<T> &lhs, const Polynom<T> &rhs)
+template <typename T> Polynom<T> operator-(Polynom<T> lhs, const Polynom<T> &rhs)
 {
     lhs -= rhs;
+    return lhs;
 }
 
-template <typename T> Polynom<T> operator*(const Polynom<T> &lhs, const Polynom<T> &rhs)
+template <typename T> Polynom<T> operator*(Polynom<T> lhs, const Polynom<T> &rhs)
 {
     lhs *= rhs;
     return lhs;
@@ -301,12 +284,12 @@ template <typename T> Polynom<T> &Polynom<T>::operator-=(const Polynom &other)
 
 template <typename T> Polynom<T> &Polynom<T>::operator*=(const Polynom &other)
 {
-    std::map<std::map<char, int>, T> temp;
+    std::map<std::map<char, unsigned int>, T> temp;
     for (auto it1 = coef.begin(); it1 != coef.end(); ++it1)
     {
         for (auto it2 = other.coef.begin(); it2 != other.coef.end(); ++it2)
         {
-            std::map<char, int> new_key = it1->first;
+            std::map<char, unsigned int> new_key = it1->first;
             for (auto jt = it2->first.begin(); jt != it2->first.end(); ++jt)
             {
                 if (new_key.find(jt->first) == new_key.end())
@@ -333,16 +316,17 @@ template <typename T> Polynom<T> &Polynom<T>::operator*=(const Polynom &other)
     return *this;
 }
 
-template <typename T> Polynom<T> operator*(const Polynom<T> &lhs, const T &rhs)
+template <typename T> Polynom<T> operator*(Polynom<T> lhs, const T &rhs)
 {
     lhs *= rhs;
     return lhs;
 }
 
-template <typename T> Polynom<T> operator*(const T &lhs, const Polynom<T> &rhs)
+template <typename T> Polynom<T> operator*(const T lhs, const Polynom<T> &rhs)
 {
-    rhs *= lhs;
-    return rhs;
+    Polynom<T> temp(lhs);
+    temp *= lhs;
+    return temp;
 }
 
 template <typename T> Polynom<T> &Polynom<T>::operator*=(const T &other)
@@ -353,16 +337,17 @@ template <typename T> Polynom<T> &Polynom<T>::operator*=(const T &other)
     }
 }
 
-template <typename T> Polynom<T> operator+(const Polynom<T> &lhs, const T &rhs)
+template <typename T> Polynom<T> operator+(Polynom<T> lhs, const T &rhs)
 {
     lhs += rhs;
     return lhs;
 }
 
-template <typename T> Polynom<T> operator+(const T &lhs, const Polynom<T> &rhs)
+template <typename T> Polynom<T> operator+(const T lhs, const Polynom<T> &rhs)
 {
-    rhs += lhs;
-    return rhs;
+    Polynom<T> temp(lhs);
+    temp += rhs;
+    return temp;
 }
 
 template <typename T> Polynom<T> &Polynom<T>::operator+=(const T &other)
@@ -377,16 +362,17 @@ template <typename T> Polynom<T> &Polynom<T>::operator+=(const T &other)
     }
 }
 
-template <typename T> Polynom<T> operator-(const Polynom<T> &lhs, const T &rhs)
+template <typename T> Polynom<T> operator-(Polynom<T> lhs, const T &rhs)
 {
     lhs -= rhs;
     return lhs;
 }
 
-template <typename T> Polynom<T> operator-(const T &lhs, const Polynom<T> &rhs)
+template <typename T> Polynom<T> operator-(T lhs, const Polynom<T> &rhs)
 {
-    rhs -= lhs;
-    return rhs;
+    Polynom<T> temp(lhs);
+    temp -= rhs;
+    return temp;
 }
 
 template <typename T> Polynom<T> &Polynom<T>::operator-=(const T &other)
@@ -401,7 +387,7 @@ template <typename T> Polynom<T> &Polynom<T>::operator-=(const T &other)
     }
 }
 
-template <typename T> Polynom<T> operator^(const Polynom<T> lhs, const unsigned long long rhs)
+template <typename T> Polynom<T> operator^(Polynom<T> lhs, const unsigned long long rhs)
 {
     lhs ^= rhs;
     return lhs;
@@ -472,4 +458,4 @@ char to_char(const std::string &s)
 {
     return s[0];
 }
-}
+} // namespace pconverter

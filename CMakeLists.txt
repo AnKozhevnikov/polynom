@@ -12,7 +12,9 @@ enable_testing()
 
 add_executable(test_basic tests/test_basic.cpp)
 target_link_libraries(test_basic PRIVATE polynom)
-target_compile_options(test_basic PRIVATE -coverage)
-target_link_options(test_basic PRIVATE -coverage)
+
+add_executable(test_custom tests/test_custom.cpp)
+target_link_libraries(test_custom PRIVATE polynom)
 
 add_test(NAME test_basic COMMAND $<TARGET_FILE:test_basic>)
+add_test(NAME test_custom COMMAND $<TARGET_FILE:test_custom>)
